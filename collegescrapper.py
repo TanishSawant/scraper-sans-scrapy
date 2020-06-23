@@ -9,7 +9,8 @@ app = Flask(__name__)
 scheduler = APScheduler()
 @app.route('/', methods=['GET'])
 def linkScrapper():
-
+#Add here:-
+#with app.app_context():
                 d = []
                 url_news = "https://www.vjti.ac.in"         # link to scrape links from
                 r = requests.get(url=url_news)  # , headers=headers

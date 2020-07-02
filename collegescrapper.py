@@ -9,6 +9,13 @@ import os
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
+import random
+import string
+
+def randomString(stringLength=8):
+    letters = string.ascii_lowercase
+    return ''.join(random.choice(letters) for i in range(stringLength))
+
 
 cred = credentials.Certificate("bitwits-key.json")
 firebase_admin.initialize_app(cred)
@@ -58,22 +65,39 @@ def linkScrapper():
             print(e)
 
         for a in json_dict:
-            print(f"{a} : {json_dict[a]}")
+            for link in json_dict[a]:
+                print(f"{a} : {link}")
+
+        d_ref = db.collection(u'Announcements')
+        dd_ref = d_ref.stream()
+
+        existing_links = []
+        for d in dd_ref:
+            existing_links.append(d.to_dict()["link"])
+
+        print(existing_links)
+        print(len(existing_links))
 
         for a in json_dict:
+            for link in json_dict[a]:
 
-            ref = db.collection(u'Announcements').document(a)
+                if link not in existing_links:
+                    print("--------------------------------------------------------------------------------")
+                    print("new : " + link)
 
-            ref.update({
-                u'title' : a,
-                u'link' : json_dict[a]
-            })
+                    ref = db.collection(u'Announcements').document("a" + randomString())
+
+                    ref.set({
+                        u'title' : a,
+                        u'link' : link
+                    })
+                else:
+                    print("No updates")
 
         return jsonify(json_dict)  # to decode JSON later in Flutter, converting obtained data to JSON
 
-
 if __name__ == '__main__':
-    scheduler.add_job(id='Scheduled Task', func=linkScrapper, trigger='interval', minutes=1)
+    scheduler.add_job(id='Scheduled Task', func=linkScrapper, trigger='interval', minutes=5)
     scheduler.start()
     port = int(os.environ.get("PORT", 5000))
     app.run(port=port)
